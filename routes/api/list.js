@@ -20,7 +20,6 @@ router.get("/pending", auth, async (req, res) => {
     }
     res.json(list);
   } catch (error) {
-    console.log(error.message);
     res.status(500).send("Server Error");
   }
 });
@@ -39,7 +38,6 @@ router.get("/completed", auth, async (req, res) => {
     }
     res.json(list);
   } catch (error) {
-    console.log(error.message);
     res.status(500).send("Server Error");
   }
 });
@@ -77,9 +75,7 @@ router.post(
       list = new List(listFields);
       await list.save();
       res.json(list);
-      console.log(req.user.id);
     } catch (error) {
-      console.log(error.message);
       res.status(500).send("server error");
     }
   }
@@ -117,8 +113,6 @@ router.put(
       let list = await List.findOne({ _id: req.params.id });
       if (list) {
         //Update
-        console.log("hello");
-
         list = await List.findOneAndUpdate(
           { _id: req.params.id },
           { $set: listFields },
@@ -127,7 +121,6 @@ router.put(
         return res.json(list);
       }
     } catch (error) {
-      console.log(error.message);
       res.status(500).send("server error");
     }
   }
@@ -138,7 +131,6 @@ router.put(
 //@access  Private
 router.delete("/:id", async (req, res) => {
   try {
-    console.log(req.user);
 
     //@todo -  remove users posts
     //Remove profile
@@ -147,7 +139,6 @@ router.delete("/:id", async (req, res) => {
     });
     res.json({ msg: "List deleted" });
   } catch (error) {
-    console.log(error.message);
     res.status(500).send("server error");
   }
 });
