@@ -13,7 +13,7 @@ router.get("/pendinglist", auth, async (req, res) => {
   try {
     const list = await List.find({
       user: req.user.id,
-      status: "flase"
+      status: "false"
     });
     if (!list) {
       return res.status(400).json({ msg: "there is no list for this user" });
@@ -45,7 +45,7 @@ router.get("/completedlist", auth, async (req, res) => {
 });
 
 //@route   POST api/list
-//@desc    Create or update user profile
+//@desc    Create user list
 //@access  Private
 router.post(
   "/",
@@ -73,20 +73,10 @@ router.post(
     if (description) listFields.description = description;
 
     try {
-      let list = await List.findOne({ user: req.user.id });
-      if (profile) {
-        //Update
-        profile = await Profile.findOneAndUpdate(
-          { user: req.user.id },
-          { $set: profileFields },
-          { new: true }
-        );
-        return res.json(profile);
-      }
       //create
-      profile = new Profile(profileFields);
-      await profile.save();
-      res.json(profile);
+      list = new List(listFields);
+      await list.save();
+      res.json(list);
       console.log(req.user.id);
     } catch (error) {
       console.log(error.message);
@@ -95,18 +85,51 @@ router.post(
   }
 );
 
-//@route   GET api/profile
-//@desc    Get all profiles
-//@access  Public
-router.get("/", async (req, res) => {
-  try {
-    const profiles = await Profile.find().populate("User", ["name", "avatar"]);
-    res.json(profiles);
-  } catch (error) {
-    console.log(error.message);
-    res.status(500).send("server error");
+//@route   POST api/list
+//@desc    Update user list
+//@access  Private
+router.post(
+  "/",
+  [
+    auth,
+    [
+      check("title", "status is required")
+        .not()
+        .isEmpty(),
+      check("text", "skill is reqired")
+        .not()
+        .isEmpty()
+    ]
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ erros: errors.array() });
+    }
+    const { title, description } = req.body;
+    //Build list object
+    const listFields = {};
+    listFields.userID = req.user.id;
+    if (title) listFields.title = title;
+    if (description) listFields.description = description;
+
+    try {
+      let list = await List.findOne({ _id: req.params.id });
+      if (list) {
+        //Update
+        list = await List.findOneAndUpdate(
+          { _id: req.id },
+          { $set: listFields },
+          { new: true }
+        );
+        return res.json(list);
+      }
+    } catch (error) {
+      console.log(error.message);
+      res.status(500).send("server error");
+    }
   }
-});
+);
 
 //@route   GET api/profile/user/:user_id
 //@desc    Get profile by user ID
@@ -127,8 +150,8 @@ router.get("/user/:user_id", async (req, res) => {
   }
 });
 
-//@route   DELETE api/profile
-//@desc    Delete profile , user & post
+//@route   DELETE api/list
+//@desc    Delete List of user
 //@access  Private
 router.delete("/", async (req, res) => {
   try {
